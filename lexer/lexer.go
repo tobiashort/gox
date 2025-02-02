@@ -45,4 +45,6 @@ func (lexer *Lexer) Tokenize(source string) {
 			panic(fmt.Sprintf("Unregognized token near: %s", lexer.Remainder()))
 		}
 	}
+
+	lexer.Add(NewToken(TokenEOF, nil))
 }

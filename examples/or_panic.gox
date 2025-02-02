@@ -1,0 +1,12 @@
+
+package main
+
+import "fmt"
+
+func foo() error {
+	return fmt.Errorf("foobar")
+}
+
+func main() {
+	foo() or_panic
+}

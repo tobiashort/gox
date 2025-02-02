@@ -14,7 +14,7 @@ func assertNil(val any) {
 }
 
 func main() {
-	data, err := os.ReadFile("./examples/hello_world.gox")
+	data, err := os.ReadFile("./examples/or_panic.gox")
 	assertNil(err)
 	source := string(data)
 	lexer := lexer.NewLexer()
