@@ -45,7 +45,7 @@ func StringHandler() PatternHandler {
 }
 
 var Patterns = []Pattern{
-	{regexp.MustCompile("^\\n"), DefaultHandler(TokenNewLine)},
+	{regexp.MustCompile("^\\n+"), DefaultHandler(TokenNewLine)},
 	{regexp.MustCompile("^\\s+"), SkipHandler()},
 	{regexp.MustCompile("^[A-Za-z_][A-Za-z0-9_]*"), IdentifierHandler()},
 	{regexp.MustCompile(`^"[^"]*"`), StringHandler()},

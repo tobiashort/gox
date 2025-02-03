@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/tobiashort/gox/assert"
 	"github.com/tobiashort/gox/lexer"
-	"github.com/tobiashort/gox/lexer/assert"
 )
 
 func TestTokenizeExamples(t *testing.T) {

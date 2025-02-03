@@ -9,7 +9,11 @@ type Lexer struct {
 }
 
 func NewLexer() *Lexer {
-	return &Lexer{}
+	return &Lexer{
+		Tokens: make([]Token, 0),
+		Source: "",
+		Pos:    0,
+	}
 }
 
 func (lexer *Lexer) HasMore() bool {
