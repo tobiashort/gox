@@ -21,6 +21,7 @@ const (
 	TokenBraceOpen  = "BRACE_OPEN"
 	TokenBraceClose = "BRACE_CLOSE"
 	TokenNewLine    = "NEW_LINE"
+	TokenComma      = "COMMA"
 
 	// Keywords
 	TokenPackage = "PACKAGE"

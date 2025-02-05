@@ -31,6 +31,12 @@ func ParseNumberExpr(token lexer.Token) ast.Expr {
 	}
 }
 
+func ParseStringExpr(token lexer.Token) ast.Expr {
+	return ast.StringExpr{
+		String: token.Value,
+	}
+}
+
 func ParseAssignmentExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	return ast.AssignmentExpr{
 		Left:  left,
@@ -46,17 +52,66 @@ func ParseBinaryExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr 
 	}
 }
 
+func ParseDotExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
+	_, leftIsSymbol := left.(ast.SymbolExpr)
+
+	right := ParseExpr(parser, BindingPower(parser, token))
+	_, rightIsSymbol := right.(ast.SymbolExpr)
+
+	if leftIsSymbol && rightIsSymbol {
+		return ast.AccessExpr{
+			Instance: left,
+			Field:    right,
+		}
+	}
+
+	parser.InvalidToken(token)
+	return nil
+}
+
+func ParseParenOpenExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
+	if left == nil {
+		expr := ParseExpr(parser, 0)
+		parser.Expect(lexer.TokenParenClose)
+		return expr
+	}
+
+	_, isSymbolExpr := left.(ast.SymbolExpr)
+	_, isAccessExpr := left.(ast.AccessExpr)
+
+	if isSymbolExpr || isAccessExpr {
+		args := ParseExpr(parser, BindingPower(parser, token))
+		parser.Expect(lexer.TokenParenClose)
+
+		return ast.FuncCallExpr{
+			Func: left,
+			Args: args,
+		}
+	}
+
+	parser.InvalidToken(token)
+	return nil
+}
+
 func BindingPower(parser *Parser, token lexer.Token) int {
 	switch token.Type {
+	case lexer.TokenParenOpen:
+		fallthrough
+	case lexer.TokenDot:
+		return 14
 	case lexer.TokenStar:
 		return 12
 	case lexer.TokenPlus:
 		return 11
 	case lexer.TokenAssign:
 		return 2
+	case lexer.TokenComma:
+		return 1
 	case lexer.TokenNumber:
 		fallthrough
 	case lexer.TokenIdentifier:
+		fallthrough
+	case lexer.TokenParenClose:
 		fallthrough
 	case lexer.TokenNewLine:
 		return 0
@@ -68,10 +123,14 @@ func BindingPower(parser *Parser, token lexer.Token) int {
 
 func NUD(parser *Parser, token lexer.Token) ast.Expr {
 	switch token.Type {
+	case lexer.TokenString:
+		return ParseStringExpr(token)
 	case lexer.TokenIdentifier:
 		return ParseSymbolExpr(token)
 	case lexer.TokenNumber:
 		return ParseNumberExpr(token)
+	case lexer.TokenParenOpen:
+		return ParseParenOpenExpr(parser, nil, token)
 	default:
 		parser.InvalidToken(token)
 		return nil
@@ -80,6 +139,10 @@ func NUD(parser *Parser, token lexer.Token) ast.Expr {
 
 func LED(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	switch token.Type {
+	case lexer.TokenParenOpen:
+		return ParseParenOpenExpr(parser, left, token)
+	case lexer.TokenDot:
+		return ParseDotExpr(parser, left, token)
 	case lexer.TokenStar:
 		fallthrough
 	case lexer.TokenPlus:

@@ -68,4 +68,5 @@ var Patterns = []Pattern{
 	{regexp.MustCompile("^\\{"), DefaultHandler(TokenBraceOpen)},
 	{regexp.MustCompile("^\\}"), DefaultHandler(TokenBraceClose)},
 	{regexp.MustCompile("^\\."), DefaultHandler(TokenDot)},
+	{regexp.MustCompile("^,"), DefaultHandler(TokenComma)},
 }
