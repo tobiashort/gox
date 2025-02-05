@@ -6,7 +6,13 @@ type TokenType = string
 
 const (
 	TokenString     = "STRING"
+	TokenNumber     = "NUMBER"
 	TokenIdentifier = "IDENTIFIER"
+
+	// operators
+	TokenAssign = "ASSIGN"
+	TokenPlus   = "PLUS"
+	TokenStar   = "STAR"
 
 	//  punctuation
 	TokenDot        = "DOT"
@@ -40,19 +46,23 @@ func IsKeyword(value string) bool {
 }
 
 type Token struct {
-	Type  string
-	Value any
+	Type   string
+	Value  string
+	Line   int
+	Column int
 }
 
-func NewToken(_type string, value any) Token {
+func NewToken(_type string, value string, line, column int) Token {
 	return Token{
-		Type:  _type,
-		Value: value,
+		Type:   _type,
+		Value:  value,
+		Line:   line,
+		Column: column,
 	}
 }
 
 func (t Token) String() string {
-	if t.Value == nil {
+	if t.Value == "" {
 		return fmt.Sprintf("%s", t.Type)
 	}
 	return fmt.Sprintf("%s (%s)", t.Type, t.Value)

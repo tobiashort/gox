@@ -1,28 +1,31 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/tobiashort/gox/ast"
 	"github.com/tobiashort/gox/lexer"
 )
 
 func ParseBlockStmt(parser *Parser) ast.Stmt {
+	parser.Expect(lexer.TokenBraceOpen)
+
 	blockStmt := ast.BlockStmt{
 		Body: make([]ast.Stmt, 0),
 	}
 
 	for {
-		token := parser.Advance()
-		if token.Type == lexer.TokenEOF {
+		nextToken := parser.Peek()
+		if nextToken.Type == lexer.TokenEOF {
 			panic("reached unexpected EOF")
 		}
-		if token.Type == lexer.TokenBraceClose {
+		if nextToken.Type == lexer.TokenBraceClose {
+			parser.Advance()
 			break
 		}
-		parseStmt := StmtParserForTokenType(token.Type)
-		if parseStmt != nil {
-			blockStmt.Body = append(blockStmt.Body, parseStmt(parser))
+		stmt := ParseStmt(parser, nextToken)
+		if stmt != nil {
+			blockStmt.Body = append(blockStmt.Body, stmt)
+		} else {
+			parser.Advance()
 		}
 	}
 
@@ -30,8 +33,9 @@ func ParseBlockStmt(parser *Parser) ast.Stmt {
 }
 
 func ParsePackageStmt(parser *Parser) ast.Stmt {
-	token := parser.Expect(lexer.TokenIdentifier)
-	value := token.Value.(string)
+	parser.Expect(lexer.TokenPackage)
+	nextToken := parser.Expect(lexer.TokenIdentifier)
+	value := nextToken.Value
 	parser.Expect(lexer.TokenNewLine)
 
 	return ast.PackageStmt{
@@ -40,8 +44,9 @@ func ParsePackageStmt(parser *Parser) ast.Stmt {
 }
 
 func ParseImportStmt(parser *Parser) ast.Stmt {
-	token := parser.Expect(lexer.TokenString)
-	value := token.Value.(string)
+	parser.Expect(lexer.TokenImport)
+	nextToken := parser.Expect(lexer.TokenString)
+	value := nextToken.Value
 	parser.Expect(lexer.TokenNewLine)
 
 	return ast.ImportStmt{
@@ -50,9 +55,10 @@ func ParseImportStmt(parser *Parser) ast.Stmt {
 }
 
 func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
+	parser.Expect(lexer.TokenFunc)
 	funcDeclStmt := ast.FuncDeclStmt{}
-	token := parser.Expect(lexer.TokenIdentifier)
-	funcDeclStmt.FuncName = token.Value.(string)
+	nextToken := parser.Expect(lexer.TokenIdentifier)
+	funcDeclStmt.FuncName = nextToken.Value
 
 	// TODO
 	parser.Expect(lexer.TokenParenOpen)
@@ -60,23 +66,34 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 	funcDeclStmt.Parameters = make([]ast.FuncParameter, 0)
 	funcDeclStmt.ReturnTypes = make([]string, 0)
 
-	parser.Expect(lexer.TokenBraceOpen)
 	funcDeclStmt.FuncBlock = ParseBlockStmt(parser).(ast.BlockStmt)
 
 	return funcDeclStmt
 }
 
-func StmtParserForTokenType(tokenType lexer.TokenType) func(*Parser) ast.Stmt {
-	switch tokenType {
+func ParseExprStmt(parser *Parser) ast.Stmt {
+	bindingPower := BindingPower(parser, parser.Peek())
+	expr := ParseExpr(parser, bindingPower)
+
+	return ast.ExprStmt{
+		Expr: expr,
+	}
+}
+
+func ParseStmt(parser *Parser, token lexer.Token) ast.Stmt {
+	switch token.Type {
 	case lexer.TokenNewLine:
 		return nil
+	case lexer.TokenIdentifier:
+		return ParseExprStmt(parser)
 	case lexer.TokenPackage:
-		return ParsePackageStmt
+		return ParsePackageStmt(parser)
 	case lexer.TokenImport:
-		return ParseImportStmt
+		return ParseImportStmt(parser)
 	case lexer.TokenFunc:
-		return ParseFuncDeclStmt
+		return ParseFuncDeclStmt(parser)
 	default:
-		panic(fmt.Sprintf("invalid token %s", tokenType))
+		parser.InvalidToken(token)
+		return nil
 	}
 }

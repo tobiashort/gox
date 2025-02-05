@@ -1,6 +1,9 @@
 package lexer
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Lexer struct {
 	Tokens []Token
@@ -22,6 +25,19 @@ func (lexer *Lexer) HasMore() bool {
 
 func (lexer *Lexer) Remainder() string {
 	return lexer.Source[lexer.Pos:]
+}
+
+func (lexer *Lexer) Line() int {
+	return len(strings.Split(lexer.Source[:lexer.Pos], "\n"))
+}
+
+func (lexer *Lexer) Column() int {
+	column := lexer.Pos
+	lines := strings.Split(lexer.Source[:lexer.Pos], "\n")
+	for i := 0; i < len(lines)-1; i++ {
+		column -= len(lines[i]) + 1
+	}
+	return column
 }
 
 func (lexer *Lexer) Add(token Token) {
@@ -50,5 +66,5 @@ func (lexer *Lexer) Tokenize(source string) {
 		}
 	}
 
-	lexer.Add(NewToken(TokenEOF, nil))
+	lexer.Add(NewToken(TokenEOF, "", lexer.Line(), lexer.Column()))
 }

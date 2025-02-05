@@ -28,7 +28,12 @@ type FuncDeclStmt struct {
 	FuncBlock   BlockStmt
 }
 
+type ExprStmt struct {
+	Expr Expr
+}
+
 func (BlockStmt) _NOP_stmt()    {}
 func (PackageStmt) _NOP_stmt()  {}
 func (ImportStmt) _NOP_stmt()   {}
 func (FuncDeclStmt) _NOP_stmt() {}
+func (ExprStmt) _NOP_stmt()     {}

@@ -28,9 +28,10 @@ func tokenize(file string) []lexer.Token {
 }
 
 func parse(file string) []ast.Stmt {
-	tokens := tokenize(file)
+	data, err := os.ReadFile(file)
+	assert.Nil(err)
 	parser := parser.NewParser()
-	parser.Parse(tokens)
+	parser.Parse(string(data))
 	return parser.Stmts
 }
 
