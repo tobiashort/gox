@@ -55,8 +55,7 @@ func ParseImportStmt(parser *Parser) ast.Stmt {
 func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 	parser.Expect(lexer.TokenFunc)
 	funcDeclStmt := ast.FuncDeclStmt{}
-	nextToken := parser.Expect(lexer.TokenIdentifier)
-	funcDeclStmt.Name = nextToken
+	funcDeclStmt.Name = parser.Expect(lexer.TokenIdentifier)
 
 	// parse parameters
 	parser.Expect(lexer.TokenParenOpen)
@@ -66,22 +65,53 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 		param.Name = parser.Expect(lexer.TokenIdentifier)
 		param.Type = parser.Expect(lexer.TokenIdentifier)
 		funcDeclStmt.Parameters = append(funcDeclStmt.Parameters, param)
-		nextToken := parser.Peek()
-		if nextToken.Type == lexer.TokenComma {
+		if parser.Peek().Type == lexer.TokenComma {
 			parser.Advance()
 			continue
-		} else if nextToken.Type == lexer.TokenParenClose {
+		} else if parser.Peek().Type == lexer.TokenParenClose {
 			break
 		} else {
-			parser.InvalidToken(nextToken)
+			parser.InvalidToken(parser.Advance())
 		}
 	}
 	parser.Advance()
 
+	// parse return types
 	funcDeclStmt.ReturnTypes = make([]lexer.Token, 0)
+	if parser.Peek().Type == lexer.TokenIdentifier {
+		retType := parser.Advance()
+		funcDeclStmt.ReturnTypes = append(funcDeclStmt.ReturnTypes, retType)
+	} else if parser.Peek().Type == lexer.TokenParenOpen {
+		parser.Advance()
+		for parser.Peek().Type != lexer.TokenParenClose {
+			retType := parser.Expect(lexer.TokenIdentifier)
+			funcDeclStmt.ReturnTypes = append(funcDeclStmt.ReturnTypes, retType)
+			if parser.Peek().Type == lexer.TokenComma {
+				parser.Advance()
+				continue
+			} else if parser.Peek().Type == lexer.TokenParenClose {
+				break
+			} else {
+				parser.InvalidToken(parser.Advance())
+			}
+		}
+		parser.Advance()
+	}
+
+	// parse function block
 	funcDeclStmt.Block = ParseBlockStmt(parser).(ast.BlockStmt)
 
 	return funcDeclStmt
+}
+
+func ParseReturnStmt(parser *Parser) ast.Stmt {
+	parser.Expect(lexer.TokenReturn)
+	expr := ParseExpr(parser, 1)
+	parser.Expect(lexer.TokenNewLine)
+
+	return ast.ReturnStmt{
+		Return: expr,
+	}
 }
 
 func ParseExprStmt(parser *Parser) ast.Stmt {
@@ -105,6 +135,8 @@ func ParseStmt(parser *Parser, token lexer.Token) ast.Stmt {
 		return ParseImportStmt(parser)
 	case lexer.TokenFunc:
 		return ParseFuncDeclStmt(parser)
+	case lexer.TokenReturn:
+		return ParseReturnStmt(parser)
 	default:
 		parser.InvalidToken(token)
 		return nil

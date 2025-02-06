@@ -30,6 +30,10 @@ type FuncDeclStmt struct {
 	Block       BlockStmt
 }
 
+type ReturnStmt struct {
+	Return Expr
+}
+
 type ExprStmt struct {
 	Expr Expr
 }
@@ -38,4 +42,5 @@ func (BlockStmt) _NOP_stmt()    {}
 func (PackageStmt) _NOP_stmt()  {}
 func (ImportStmt) _NOP_stmt()   {}
 func (FuncDeclStmt) _NOP_stmt() {}
+func (ReturnStmt) _NOP_stmt()   {}
 func (ExprStmt) _NOP_stmt()     {}

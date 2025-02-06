@@ -1,12 +1,21 @@
 package main
 
-func arg2(a string, b int) {
-	
-}
-
-func arg1(arg string) {
-	
-}
-
 func main() {
+}
+
+func func1(param1 string) {
+	
+}
+
+func func2(param1 string, param2 int) {
+	
+}
+
+func func3() string {
+}
+
+func func4() (string, error) {
+}
+
+func func5() {
 }

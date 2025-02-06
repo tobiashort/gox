@@ -71,7 +71,7 @@ func ParseDotExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 
 func ParseParenOpenExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	if left == nil {
-		expr := ParseExpr(parser, 0)
+		expr := ParseExpr(parser, 1)
 		parser.Expect(lexer.TokenParenClose)
 		return expr
 	}
