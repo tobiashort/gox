@@ -80,9 +80,14 @@ func ParseParenOpenExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Ex
 	_, isAccessExpr := left.(ast.AccessExpr)
 
 	if isSymbolExpr || isAccessExpr {
+		funcCallExpr := ast.FuncCallExpr{}
+		funcCallExpr.Func = left
+		if parser.Peek().Type == lexer.TokenParenClose {
+			parser.Advance()
+			return funcCallExpr
+		}
 		args := ParseExpr(parser, BindingPower(parser, token))
 		parser.Expect(lexer.TokenParenClose)
-
 		return ast.FuncCallExpr{
 			Func: left,
 			Args: args,
