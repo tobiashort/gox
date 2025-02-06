@@ -1,4 +1,12 @@
 package main
 
+func arg2(a string, b int) {
+	
+}
+
+func arg1(arg string) {
+	
+}
+
 func main() {
 }

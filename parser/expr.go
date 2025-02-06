@@ -27,13 +27,13 @@ func ParseSymbolExpr(token lexer.Token) ast.Expr {
 
 func ParseNumberExpr(token lexer.Token) ast.Expr {
 	return ast.NumberExpr{
-		Number: token.Value,
+		Number: token,
 	}
 }
 
 func ParseStringExpr(token lexer.Token) ast.Expr {
 	return ast.StringExpr{
-		String: token.Value,
+		String: token,
 	}
 }
 

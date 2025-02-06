@@ -11,11 +11,11 @@ type SymbolExpr struct {
 }
 
 type NumberExpr struct {
-	Number string
+	Number lexer.Token
 }
 
 type StringExpr struct {
-	String string
+	String lexer.Token
 }
 
 type AssignmentExpr struct {

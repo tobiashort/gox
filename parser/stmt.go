@@ -35,22 +35,20 @@ func ParseBlockStmt(parser *Parser) ast.Stmt {
 func ParsePackageStmt(parser *Parser) ast.Stmt {
 	parser.Expect(lexer.TokenPackage)
 	nextToken := parser.Expect(lexer.TokenIdentifier)
-	value := nextToken.Value
 	parser.Expect(lexer.TokenNewLine)
 
 	return ast.PackageStmt{
-		PackageName: value,
+		PackageName: nextToken,
 	}
 }
 
 func ParseImportStmt(parser *Parser) ast.Stmt {
 	parser.Expect(lexer.TokenImport)
 	nextToken := parser.Expect(lexer.TokenString)
-	value := nextToken.Value
 	parser.Expect(lexer.TokenNewLine)
 
 	return ast.ImportStmt{
-		PackageName: value,
+		PackageName: nextToken,
 	}
 }
 
@@ -58,15 +56,30 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 	parser.Expect(lexer.TokenFunc)
 	funcDeclStmt := ast.FuncDeclStmt{}
 	nextToken := parser.Expect(lexer.TokenIdentifier)
-	funcDeclStmt.FuncName = nextToken.Value
+	funcDeclStmt.Name = nextToken
 
-	// TODO
+	// parse parameters
 	parser.Expect(lexer.TokenParenOpen)
-	parser.Expect(lexer.TokenParenClose)
 	funcDeclStmt.Parameters = make([]ast.FuncParameter, 0)
-	funcDeclStmt.ReturnTypes = make([]string, 0)
+	for parser.Peek().Type != lexer.TokenParenClose {
+		param := ast.FuncParameter{}
+		param.Name = parser.Expect(lexer.TokenIdentifier)
+		param.Type = parser.Expect(lexer.TokenIdentifier)
+		funcDeclStmt.Parameters = append(funcDeclStmt.Parameters, param)
+		nextToken := parser.Peek()
+		if nextToken.Type == lexer.TokenComma {
+			parser.Advance()
+			continue
+		} else if nextToken.Type == lexer.TokenParenClose {
+			break
+		} else {
+			parser.InvalidToken(nextToken)
+		}
+	}
+	parser.Advance()
 
-	funcDeclStmt.FuncBlock = ParseBlockStmt(parser).(ast.BlockStmt)
+	funcDeclStmt.ReturnTypes = make([]lexer.Token, 0)
+	funcDeclStmt.Block = ParseBlockStmt(parser).(ast.BlockStmt)
 
 	return funcDeclStmt
 }

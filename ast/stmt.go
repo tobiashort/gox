@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/tobiashort/gox/lexer"
+
 type Stmt interface {
 	_NOP_stmt()
 }
@@ -9,23 +11,23 @@ type BlockStmt struct {
 }
 
 type PackageStmt struct {
-	PackageName string
+	PackageName lexer.Token
 }
 
 type ImportStmt struct {
-	PackageName string
+	PackageName lexer.Token
 }
 
 type FuncParameter struct {
-	ParamName string
-	ParamType string
+	Name lexer.Token
+	Type lexer.Token
 }
 
 type FuncDeclStmt struct {
-	FuncName    string
+	Name        lexer.Token
 	Parameters  []FuncParameter
-	ReturnTypes []string
-	FuncBlock   BlockStmt
+	ReturnTypes []lexer.Token
+	Block       BlockStmt
 }
 
 type ExprStmt struct {
