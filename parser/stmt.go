@@ -73,6 +73,8 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 		} else {
 			parser.InvalidToken(parser.Advance())
 		}
+		//funcDeclStmt.Parameters = ParseExpr(parser, 1)
+
 	}
 	parser.Advance()
 
@@ -105,13 +107,14 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 }
 
 func ParseReturnStmt(parser *Parser) ast.Stmt {
+	returnStmt := ast.ReturnStmt{}
 	parser.Expect(lexer.TokenReturn)
-	expr := ParseExpr(parser, 1)
-	parser.Expect(lexer.TokenNewLine)
-
-	return ast.ReturnStmt{
-		Return: expr,
+	if parser.Peek().Type == lexer.TokenNewLine {
+		parser.Advance()
+		return returnStmt
 	}
+	returnStmt.Values = ParseExpr(parser, 0)
+	return returnStmt
 }
 
 func ParseExprStmt(parser *Parser) ast.Stmt {

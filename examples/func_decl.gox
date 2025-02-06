@@ -4,18 +4,19 @@ func main() {
 }
 
 func func1(param1 string) {
-	
 }
 
 func func2(param1 string, param2 int) {
-	
 }
 
 func func3() string {
+	return ""
 }
 
 func func4() (string, error) {
+	return "", nil
 }
 
 func func5() {
+	return
 }

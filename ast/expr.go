@@ -39,6 +39,11 @@ type FuncCallExpr struct {
 	Args Expr
 }
 
+type ListExpr struct {
+	Value Expr
+	Next  Expr
+}
+
 func (SymbolExpr) _NOP_expr()     {}
 func (NumberExpr) _NOP_expr()     {}
 func (StringExpr) _NOP_expr()     {}
@@ -46,3 +51,4 @@ func (AssignmentExpr) _NOP_expr() {}
 func (BinaryExpr) _NOP_expr()     {}
 func (AccessExpr) _NOP_expr()     {}
 func (FuncCallExpr) _NOP_expr()   {}
+func (ListExpr) _NOP_expr()       {}

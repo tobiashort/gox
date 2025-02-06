@@ -93,6 +93,13 @@ func ParseParenOpenExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Ex
 	return nil
 }
 
+func ParseListExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
+	return ast.ListExpr{
+		Value: left,
+		Next:  ParseExpr(parser, BindingPower(parser, token)),
+	}
+}
+
 func BindingPower(parser *Parser, token lexer.Token) int {
 	switch token.Type {
 	case lexer.TokenParenOpen:
@@ -149,6 +156,8 @@ func LED(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 		return ParseBinaryExpr(parser, left, token)
 	case lexer.TokenAssign:
 		return ParseAssignmentExpr(parser, left, token)
+	case lexer.TokenComma:
+		return ParseListExpr(parser, left, token)
 	default:
 		parser.InvalidToken(token)
 		return nil

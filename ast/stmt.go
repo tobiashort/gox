@@ -31,7 +31,7 @@ type FuncDeclStmt struct {
 }
 
 type ReturnStmt struct {
-	Return Expr
+	Values Expr
 }
 
 type ExprStmt struct {
