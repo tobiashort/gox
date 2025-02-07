@@ -73,8 +73,6 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 		} else {
 			parser.InvalidToken(parser.Advance())
 		}
-		//funcDeclStmt.Parameters = ParseExpr(parser, 1)
-
 	}
 	parser.Advance()
 
