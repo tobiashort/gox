@@ -35,8 +35,9 @@ type AccessExpr struct {
 }
 
 type FuncCallExpr struct {
-	Func Expr
-	Args Expr
+	Func    Expr
+	Args    Expr
+	OrPanic bool
 }
 
 type ListExpr struct {

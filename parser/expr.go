@@ -103,8 +103,16 @@ func ParseListExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	}
 }
 
+func ParseOrPanicExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
+	funcCallExpr := left.(ast.FuncCallExpr)
+	funcCallExpr.OrPanic = true
+	return funcCallExpr
+}
+
 func BindingPower(parser *Parser, token lexer.Token) int {
 	switch token.Type {
+	case lexer.TokenOrPanic:
+		fallthrough
 	case lexer.TokenParenOpen:
 		fallthrough
 	case lexer.TokenDot:
@@ -149,6 +157,8 @@ func NUD(parser *Parser, token lexer.Token) ast.Expr {
 
 func LED(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	switch token.Type {
+	case lexer.TokenOrPanic:
+		return ParseOrPanicExpr(parser, left, token)
 	case lexer.TokenParenOpen:
 		return ParseParenOpenExpr(parser, left, token)
 	case lexer.TokenDot:
