@@ -11,6 +11,7 @@ import (
 	"github.com/tobiashort/gox/ast"
 	"github.com/tobiashort/gox/lexer"
 	"github.com/tobiashort/gox/parser"
+	"github.com/tobiashort/gox/transpiler"
 )
 
 func usage() {
@@ -63,6 +64,16 @@ func main() {
 		file := flag.Arg(1)
 		ast := parse(file)
 		litter.Dump(ast)
+	case "transpile":
+		if flag.NArg() != 2 {
+			fmt.Fprintln(os.Stderr, "must provide file")
+			os.Exit(1)
+		}
+		file := flag.Arg(1)
+		ast := parse(file)
+		transpiler := transpiler.NewTranspiler()
+		source := transpiler.Transpile(ast)
+		fmt.Println(source)
 	default:
 		usage()
 		os.Exit(1)
