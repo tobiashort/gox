@@ -87,11 +87,9 @@ func ParseParenOpenExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Ex
 			return funcCallExpr
 		}
 		args := ParseExpr(parser, BindingPower(parser, token))
+		funcCallExpr.Args = args
 		parser.Expect(lexer.TokenParenClose)
-		return ast.FuncCallExpr{
-			Func: left,
-			Args: args,
-		}
+		return funcCallExpr
 	}
 
 	parser.InvalidToken(token)
