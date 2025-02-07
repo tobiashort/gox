@@ -99,7 +99,7 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 	}
 
 	// parse function block
-	funcDeclStmt.Block = ParseBlockStmt(parser).(ast.BlockStmt)
+	funcDeclStmt.Block = ParseBlockStmt(parser)
 
 	return funcDeclStmt
 }

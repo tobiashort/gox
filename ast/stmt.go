@@ -27,7 +27,7 @@ type FuncDeclStmt struct {
 	Name        lexer.Token
 	Parameters  []FuncParameter
 	ReturnTypes []lexer.Token
-	Block       BlockStmt
+	Block       Stmt
 }
 
 type ReturnStmt struct {
