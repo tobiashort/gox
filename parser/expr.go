@@ -37,6 +37,13 @@ func ParseStringExpr(token lexer.Token) ast.Expr {
 	}
 }
 
+func ParseDeclAssignExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
+	return ast.AssignDeclExpr{
+		Left:  left,
+		Right: ParseExpr(parser, BindingPower(parser, token)),
+	}
+}
+
 func ParseAssignmentExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 	return ast.AssignmentExpr{
 		Left:  left,
@@ -122,6 +129,8 @@ func BindingPower(parser *Parser, token lexer.Token) int {
 	case lexer.TokenPlus:
 		return 11
 	case lexer.TokenAssign:
+		fallthrough
+	case lexer.TokenDeclAssign:
 		return 2
 	case lexer.TokenComma:
 		return 1
@@ -169,6 +178,8 @@ func LED(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
 		return ParseBinaryExpr(parser, left, token)
 	case lexer.TokenAssign:
 		return ParseAssignmentExpr(parser, left, token)
+	case lexer.TokenDeclAssign:
+		return ParseDeclAssignExpr(parser, left, token)
 	case lexer.TokenComma:
 		return ParseListExpr(parser, left, token)
 	default:

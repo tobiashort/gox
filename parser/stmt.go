@@ -104,6 +104,14 @@ func ParseFuncDeclStmt(parser *Parser) ast.Stmt {
 	return funcDeclStmt
 }
 
+func ParseVarDeclStmt(parser *Parser) ast.Stmt {
+	parser.Expect(lexer.TokenVar)
+	varDeclStmt := ast.VarDeclStmt{}
+	varDeclStmt.Name = parser.Expect(lexer.TokenIdentifier)
+	varDeclStmt.Type = parser.Expect(lexer.TokenIdentifier)
+	return varDeclStmt
+}
+
 func ParseReturnStmt(parser *Parser) ast.Stmt {
 	returnStmt := ast.ReturnStmt{}
 	parser.Expect(lexer.TokenReturn)
@@ -136,6 +144,8 @@ func ParseStmt(parser *Parser, token lexer.Token) ast.Stmt {
 		return ParseImportStmt(parser)
 	case lexer.TokenFunc:
 		return ParseFuncDeclStmt(parser)
+	case lexer.TokenVar:
+		return ParseVarDeclStmt(parser)
 	case lexer.TokenReturn:
 		return ParseReturnStmt(parser)
 	default:

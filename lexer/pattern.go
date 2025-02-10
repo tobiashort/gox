@@ -61,6 +61,7 @@ var Patterns = []Pattern{
 	{regexp.MustCompile("^package"), DefaultHandler(TokenPackage)},
 	{regexp.MustCompile("^import"), DefaultHandler(TokenImport)},
 	{regexp.MustCompile("^="), DefaultHandler(TokenAssign)},
+	{regexp.MustCompile("^:="), DefaultHandler(TokenDeclAssign)},
 	{regexp.MustCompile("^\\+"), DefaultHandler(TokenPlus)},
 	{regexp.MustCompile("^\\*"), DefaultHandler(TokenStar)},
 	{regexp.MustCompile("^\\("), DefaultHandler(TokenParenOpen)},

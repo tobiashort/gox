@@ -10,9 +10,10 @@ const (
 	TokenIdentifier = "IDENTIFIER"
 
 	// operators
-	TokenAssign = "ASSIGN"
-	TokenPlus   = "PLUS"
-	TokenStar   = "STAR"
+	TokenAssign     = "ASSIGN"
+	TokenDeclAssign = "DECL_ASSIGN"
+	TokenPlus       = "PLUS"
+	TokenStar       = "STAR"
 
 	//  punctuation
 	TokenDot        = "DOT"
@@ -27,6 +28,7 @@ const (
 	TokenPackage = "PACKAGE"
 	TokenImport  = "IMPORT"
 	TokenFunc    = "FUNC"
+	TokenVar     = "VAR"
 	TokenOrPanic = "OR_PANIC"
 	TokenReturn  = "RETURN"
 
@@ -37,6 +39,7 @@ var Keywords = map[string]TokenType{
 	"package":  TokenPackage,
 	"import":   TokenImport,
 	"func":     TokenFunc,
+	"var":      TokenVar,
 	"or_panic": TokenOrPanic,
 	"return":   TokenReturn,
 }

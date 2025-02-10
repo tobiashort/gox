@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-vunc bar() (string, error) {
+func bar() (string, error) {
 	return "", nil
 }
 

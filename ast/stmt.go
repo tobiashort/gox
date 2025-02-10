@@ -30,6 +30,11 @@ type FuncDeclStmt struct {
 	Block       Stmt
 }
 
+type VarDeclStmt struct {
+	Name lexer.Token
+	Type lexer.Token
+}
+
 type ReturnStmt struct {
 	Values Expr
 }
@@ -42,5 +47,6 @@ func (BlockStmt) _NOP_stmt()    {}
 func (PackageStmt) _NOP_stmt()  {}
 func (ImportStmt) _NOP_stmt()   {}
 func (FuncDeclStmt) _NOP_stmt() {}
+func (VarDeclStmt) _NOP_stmt()  {}
 func (ReturnStmt) _NOP_stmt()   {}
 func (ExprStmt) _NOP_stmt()     {}
