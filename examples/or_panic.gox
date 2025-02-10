@@ -2,10 +2,17 @@ package main
 
 import "fmt"
 
+vunc bar() (string, error) {
+	return "", nil
+}
+
 func foo() error {
 	return fmt.Errorf("foobar")
 }
 
 func main() {
+	s := bar() or_panic
+	fmt.Println(s)
+	foo() or_panic
 	foo() or_panic
 }

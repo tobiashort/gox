@@ -1,0 +1,6 @@
+package main
+
+func main() {
+	var err error
+	str := "hello"
+}
