@@ -19,7 +19,7 @@ func NewTranspiler() *Transpiler {
 }
 
 func (transpiler *Transpiler) Transpile(_ast []ast.Stmt) string {
-	transpiler.TranspileIndent(_ast, 0)
+	transpiler.TranspileWithDepth(_ast, 0)
 	return strings.TrimSpace(transpiler.StringBuilder.String())
 }
 
@@ -74,6 +74,14 @@ func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr
 	}
 }
 
+func (transpiler *Transpiler) TranspileAssignDeclExpr(stmtInterface ast.Stmt, expr ast.AssignDeclExpr, indent string) {
+	transpiler.Write(indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	transpiler.Write(" := ")
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
+	transpiler.Write("\n")
+}
+
 func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterface ast.Expr, indent string) {
 	switch expr := exprInterface.(type) {
 	case nil:
@@ -86,6 +94,8 @@ func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterfac
 		transpiler.TranspileAccessExpr(stmtInterface, expr, indent)
 	case ast.FuncCallExpr:
 		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent)
+	case ast.AssignDeclExpr:
+		transpiler.TranspileAssignDeclExpr(stmtInterface, expr, indent)
 	default:
 		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.StringBuilder.String(), reflect.TypeOf(expr)))
 	}
@@ -118,7 +128,7 @@ func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, inden
 		}
 	}
 	transpiler.Write("{\n")
-	transpiler.TranspileIndent(stmt.Block.(ast.BlockStmt).Body, depth+1)
+	transpiler.TranspileWithDepth(stmt.Block.(ast.BlockStmt).Body, depth+1)
 	transpiler.Write("}\n\n")
 }
 
@@ -127,7 +137,11 @@ func (transpiler *Transpiler) TranspileReturnStmt(stmt ast.ReturnStmt, indent st
 	transpiler.TranspileExpr(stmt, stmt.Values, indent)
 }
 
-func (transpiler *Transpiler) TranspileIndent(_ast []ast.Stmt, depth int) {
+func (transpiler *Transpiler) TranspileVarDeclStmt(stmt ast.VarDeclStmt, indent string) {
+	transpiler.Writef("%svar %s %s\n", indent, stmt.Name.Value, stmt.Type.Value)
+}
+
+func (transpiler *Transpiler) TranspileWithDepth(_ast []ast.Stmt, depth int) {
 	indent := strings.Repeat("\t", depth)
 	for _, stmtInterface := range _ast {
 		switch stmt := stmtInterface.(type) {
@@ -139,6 +153,8 @@ func (transpiler *Transpiler) TranspileIndent(_ast []ast.Stmt, depth int) {
 			transpiler.TranspileFuncDeclStmt(stmt, indent, depth)
 		case ast.ReturnStmt:
 			transpiler.TranspileReturnStmt(stmt, indent)
+		case ast.VarDeclStmt:
+			transpiler.TranspileVarDeclStmt(stmt, indent)
 		case ast.ExprStmt:
 			transpiler.TranspileExpr(stmt, stmt.Expr, indent)
 		default:
