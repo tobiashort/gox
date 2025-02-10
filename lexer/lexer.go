@@ -62,9 +62,19 @@ func (lexer *Lexer) Tokenize(source string) {
 		}
 
 		if !matched {
-			panic(fmt.Sprintf("Unregognized token near: %s", lexer.Remainder()))
+			lexer.InvalidToken()
 		}
 	}
 
 	lexer.Add(NewToken(TokenEOF, "", lexer.Line(), lexer.Column()))
+}
+
+func (lexer *Lexer) InvalidToken() {
+	line := strings.Split(lexer.Source, "\n")[lexer.Line()-1]
+	line = strings.ReplaceAll(line, "\t", " ")
+	cursor := "^"
+	if lexer.Pos > 0 {
+		cursor = strings.Repeat("-", lexer.Column()) + cursor
+	}
+	panic(fmt.Sprintf("invalid token %s at line %d column %d\n%s\n%s", string(lexer.Source[lexer.Pos]), lexer.Line(), lexer.Column(), line, cursor))
 }
