@@ -82,6 +82,15 @@ func (transpiler *Transpiler) TranspileAssignDeclExpr(stmtInterface ast.Stmt, ex
 	transpiler.Write("\n")
 }
 
+func (transpiler *Transpiler) TranspileListExpr(stmtInterface ast.Stmt, expr ast.ListExpr, indent string) {
+	transpiler.TranspileExpr(stmtInterface, expr.Value, indent)
+	if expr.Next != nil {
+		transpiler.Write(", ")
+		transpiler.TranspileExpr(stmtInterface, expr.Next, "")
+	}
+	transpiler.Write("\n")
+}
+
 func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterface ast.Expr, indent string) {
 	switch expr := exprInterface.(type) {
 	case nil:
@@ -96,6 +105,8 @@ func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterfac
 		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent)
 	case ast.AssignDeclExpr:
 		transpiler.TranspileAssignDeclExpr(stmtInterface, expr, indent)
+	case ast.ListExpr:
+		transpiler.TranspileListExpr(stmtInterface, expr, indent)
 	default:
 		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.StringBuilder.String(), reflect.TypeOf(expr)))
 	}
