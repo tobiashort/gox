@@ -23,7 +23,7 @@ type AssignmentExpr struct {
 	Right Expr
 }
 
-type AssignDeclExpr struct {
+type DeclAssignExpr struct {
 	Left  Expr
 	Right Expr
 }
@@ -54,7 +54,7 @@ func (SymbolExpr) _NOP_expr()     {}
 func (NumberExpr) _NOP_expr()     {}
 func (StringExpr) _NOP_expr()     {}
 func (AssignmentExpr) _NOP_expr() {}
-func (AssignDeclExpr) _NOP_expr() {}
+func (DeclAssignExpr) _NOP_expr() {}
 func (BinaryExpr) _NOP_expr()     {}
 func (AccessExpr) _NOP_expr()     {}
 func (FuncCallExpr) _NOP_expr()   {}

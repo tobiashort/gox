@@ -38,7 +38,7 @@ func ParseStringExpr(token lexer.Token) ast.Expr {
 }
 
 func ParseDeclAssignExpr(parser *Parser, left ast.Expr, token lexer.Token) ast.Expr {
-	return ast.AssignDeclExpr{
+	return ast.DeclAssignExpr{
 		Left:  left,
 		Right: ParseExpr(parser, BindingPower(parser, token)),
 	}

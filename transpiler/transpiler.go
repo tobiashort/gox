@@ -48,12 +48,21 @@ func (transpiler *Transpiler) TranspileAccessExpr(stmtInterface ast.Stmt, expr a
 func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr ast.FuncCallExpr, indent string) {
 	switch stmtInterface.(type) {
 	case ast.ReturnStmt:
-		transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
-		transpiler.Write("(")
-		transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
-		transpiler.Write(")\n")
 		if expr.OrPanic {
-			panic(fmt.Sprintf("\n%s... <--- illegal or_panic", transpiler.StringBuilder.String()))
+			transpiler.Writef("%sret, err := ", indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.Write("(")
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.Write(")\n")
+			transpiler.Writef("%sif err != nil {\n", indent)
+			transpiler.Writef("%s%spanic(err)\n", indent, indent)
+			transpiler.Writef("%s}\n", indent)
+			transpiler.Writef("%sreturn ret\n", indent)
+		} else {
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.Write("(")
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.Write(")\n")
 		}
 	case ast.ExprStmt:
 		transpiler.Write(indent)
@@ -74,7 +83,7 @@ func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr
 	}
 }
 
-func (transpiler *Transpiler) TranspileAssignDeclExpr(stmtInterface ast.Stmt, expr ast.AssignDeclExpr, indent string) {
+func (transpiler *Transpiler) TranspileDeclAssignExpr(stmtInterface ast.Stmt, expr ast.DeclAssignExpr, indent string) {
 	transpiler.Write(indent)
 	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
 	transpiler.Write(" := ")
@@ -103,8 +112,8 @@ func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterfac
 		transpiler.TranspileAccessExpr(stmtInterface, expr, indent)
 	case ast.FuncCallExpr:
 		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent)
-	case ast.AssignDeclExpr:
-		transpiler.TranspileAssignDeclExpr(stmtInterface, expr, indent)
+	case ast.DeclAssignExpr:
+		transpiler.TranspileDeclAssignExpr(stmtInterface, expr, indent)
 	case ast.ListExpr:
 		transpiler.TranspileListExpr(stmtInterface, expr, indent)
 	default:
@@ -144,7 +153,12 @@ func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, inden
 }
 
 func (transpiler *Transpiler) TranspileReturnStmt(stmt ast.ReturnStmt, indent string) {
-	transpiler.Writef("%sreturn ", indent)
+	funcCallExpr, isFuncCallExpr := stmt.Values.(ast.FuncCallExpr)
+	if isFuncCallExpr && funcCallExpr.OrPanic {
+		// defer the return keyword
+	} else {
+		transpiler.Writef("%sreturn ", indent)
+	}
 	transpiler.TranspileExpr(stmt, stmt.Values, indent)
 }
 
