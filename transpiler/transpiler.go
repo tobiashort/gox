@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tobiashort/gox/ast"
+	"github.com/tobiashort/gox/parser"
 )
 
 type Transpiler struct {
@@ -18,8 +19,10 @@ func NewTranspiler() *Transpiler {
 	}
 }
 
-func (transpiler *Transpiler) Transpile(_ast []ast.Stmt) string {
-	transpiler.TranspileWithDepth(_ast, 0)
+func (transpiler *Transpiler) Transpile(source string) string {
+	parser := parser.NewParser()
+	parser.Parse(source)
+	transpiler.TranspileWithDepth(parser.Stmts, 0)
 	return strings.TrimSpace(transpiler.StringBuilder.String())
 }
 

@@ -36,6 +36,14 @@ func parse(file string) []ast.Stmt {
 	return parser.Stmts
 }
 
+func transpile(file string) string {
+	data, err := os.ReadFile(file)
+	assert.Nil(err)
+	transpiler := transpiler.NewTranspiler()
+	transpiler.Transpile(string(data))
+	return transpiler.String()
+}
+
 func main() {
 	flag.Usage = usage
 	flag.Parse()
@@ -70,9 +78,7 @@ func main() {
 			os.Exit(1)
 		}
 		file := flag.Arg(1)
-		ast := parse(file)
-		transpiler := transpiler.NewTranspiler()
-		source := transpiler.Transpile(ast)
+		source := transpile(file)
 		fmt.Println(source)
 	default:
 		usage()
