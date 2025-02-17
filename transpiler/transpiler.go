@@ -31,6 +31,10 @@ func (transpiler *Transpiler) Writef(format string, args ...any) {
 	transpiler.StringBuilder.WriteString(fmt.Sprintf(format, args...))
 }
 
+func (transpiler *Transpiler) String() string {
+	return transpiler.StringBuilder.String()
+}
+
 func (transpiler *Transpiler) TranspileSymbolExpr(expr ast.SymbolExpr) {
 	transpiler.Write(expr.Symbol.Value)
 }
@@ -46,7 +50,7 @@ func (transpiler *Transpiler) TranspileAccessExpr(stmtInterface ast.Stmt, expr a
 }
 
 func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr ast.FuncCallExpr, indent string) {
-	switch stmtInterface.(type) {
+	switch stmt := stmtInterface.(type) {
 	case ast.ReturnStmt:
 		if expr.OrPanic {
 			transpiler.Writef("%sret, err := ", indent)
@@ -65,27 +69,46 @@ func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr
 			transpiler.Write(")\n")
 		}
 	case ast.ExprStmt:
-		transpiler.Write(indent)
-		if expr.OrPanic {
-			transpiler.StringBuilder.WriteString("err := ")
-		}
-		transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
-		transpiler.Write("(")
-		transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
-		transpiler.Write(")\n")
-		if expr.OrPanic {
-			transpiler.Writef("%sif err != nil { \n", indent)
-			transpiler.Writef("%s%spanic(err)\n", indent, indent)
-			transpiler.Writef("%s}\n", indent)
+		switch stmt.Expr.(type) {
+		case ast.DeclAssignExpr:
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.Write("(")
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.Write(")\n")
+			if expr.OrPanic {
+				transpiler.Writef("%sif err != nil { \n", indent)
+				transpiler.Writef("%s%spanic(err)\n", indent, indent)
+				transpiler.Writef("%s}\n", indent)
+			}
+		case ast.FuncCallExpr:
+			transpiler.Write(indent)
+			if expr.OrPanic {
+				transpiler.Write("err := ")
+			}
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.Write("(")
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.Write(")\n")
+			if expr.OrPanic {
+				transpiler.Writef("%sif err != nil { \n", indent)
+				transpiler.Writef("%s%spanic(err)\n", indent, indent)
+				transpiler.Writef("%s}\n", indent)
+			}
+		default:
+			panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.String(), reflect.TypeOf(expr)))
 		}
 	default:
-		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.StringBuilder.String(), reflect.TypeOf(expr)))
+		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.String(), reflect.TypeOf(stmt)))
 	}
 }
 
 func (transpiler *Transpiler) TranspileDeclAssignExpr(stmtInterface ast.Stmt, expr ast.DeclAssignExpr, indent string) {
 	transpiler.Write(indent)
 	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	funcCallExpr, isFuncCallExpr := expr.Right.(ast.FuncCallExpr)
+	if isFuncCallExpr && funcCallExpr.OrPanic {
+		transpiler.Write(", err")
+	}
 	transpiler.Write(" := ")
 	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
 	transpiler.Write("\n")
