@@ -17,6 +17,7 @@ type Parser struct {
 
 func NewParser() *Parser {
 	return &Parser{
+		Source: "",
 		Stmts:  make([]ast.Stmt, 0),
 		Tokens: make([]lexer.Token, 0),
 		Pos:    0,
