@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/tobiashort/gox/ast"
+	"github.com/tobiashort/gox/lexer"
 	"github.com/tobiashort/gox/parser"
 )
 
@@ -46,10 +47,27 @@ func (transpiler *Transpiler) TranspileStringExpr(expr ast.StringExpr) {
 	transpiler.Writef("\"%s\"", expr.String.Value)
 }
 
+func (transpiler *Transpiler) TranspileNumberExpr(expr ast.NumberExpr) {
+	transpiler.Write(expr.Number.Value)
+}
+
 func (transpiler *Transpiler) TranspileAccessExpr(stmtInterface ast.Stmt, expr ast.AccessExpr, indent string) {
 	transpiler.TranspileExpr(stmtInterface, expr.Instance, indent)
 	transpiler.Write(".")
 	transpiler.TranspileExpr(stmtInterface, expr.Field, indent)
+}
+
+func (transpiler *Transpiler) TranspileBinaryExpr(stmtInterface ast.Stmt, expr ast.BinaryExpr, indent string) {
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	switch expr.Operator.Type {
+	case lexer.TokenPlus:
+		transpiler.Write(" + ")
+	case lexer.TokenStar:
+		transpiler.Write(" * ")
+	default:
+		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.String(), reflect.TypeOf(expr.Operator)))
+	}
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
 }
 
 func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr ast.FuncCallExpr, indent string) {
@@ -117,13 +135,20 @@ func (transpiler *Transpiler) TranspileDeclAssignExpr(stmtInterface ast.Stmt, ex
 	transpiler.Write("\n")
 }
 
+func (transpiler *Transpiler) TranspileAssignmentExpr(stmtInterface ast.Stmt, expr ast.AssignmentExpr, indent string) {
+	transpiler.Write(indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	transpiler.Write(" = ")
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
+	transpiler.Write("\n")
+}
+
 func (transpiler *Transpiler) TranspileListExpr(stmtInterface ast.Stmt, expr ast.ListExpr, indent string) {
 	transpiler.TranspileExpr(stmtInterface, expr.Value, indent)
 	if expr.Next != nil {
 		transpiler.Write(", ")
 		transpiler.TranspileExpr(stmtInterface, expr.Next, "")
 	}
-	transpiler.Write("\n")
 }
 
 func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterface ast.Expr, indent string) {
@@ -134,10 +159,16 @@ func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterfac
 		transpiler.TranspileSymbolExpr(expr)
 	case ast.StringExpr:
 		transpiler.TranspileStringExpr(expr)
+	case ast.NumberExpr:
+		transpiler.TranspileNumberExpr(expr)
 	case ast.AccessExpr:
 		transpiler.TranspileAccessExpr(stmtInterface, expr, indent)
+	case ast.BinaryExpr:
+		transpiler.TranspileBinaryExpr(stmtInterface, expr, indent)
 	case ast.FuncCallExpr:
 		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent)
+	case ast.AssignmentExpr:
+		transpiler.TranspileAssignmentExpr(stmtInterface, expr, indent)
 	case ast.DeclAssignExpr:
 		transpiler.TranspileDeclAssignExpr(stmtInterface, expr, indent)
 	case ast.ListExpr:
@@ -186,6 +217,7 @@ func (transpiler *Transpiler) TranspileReturnStmt(stmt ast.ReturnStmt, indent st
 		transpiler.Writef("%sreturn ", indent)
 	}
 	transpiler.TranspileExpr(stmt, stmt.Values, indent)
+	transpiler.Write("\n")
 }
 
 func (transpiler *Transpiler) TranspileVarDeclStmt(stmt ast.VarDeclStmt, indent string) {
