@@ -9,7 +9,7 @@ import (
 	"github.com/tobiashort/gox/transpiler"
 )
 
-func TestTokenizeExamples(t *testing.T) {
+func TestTranspileExamples(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join("..", "examples"))
 	assert.Nil(err)
 	for _, entry := range entries {

@@ -23,7 +23,8 @@ func NewTranspiler() *Transpiler {
 func (transpiler *Transpiler) Transpile(source string) string {
 	parser := parser.NewParser()
 	parser.Parse(source)
-	transpiler.TranspileWithDepth(parser.Stmts, 0)
+	locals := make(map[string]bool)
+	transpiler.TranspileWithDepth(parser.Stmts, 0, locals)
 	return strings.TrimSpace(transpiler.StringBuilder.String())
 }
 
@@ -51,14 +52,14 @@ func (transpiler *Transpiler) TranspileNumberExpr(expr ast.NumberExpr) {
 	transpiler.Write(expr.Number.Value)
 }
 
-func (transpiler *Transpiler) TranspileAccessExpr(stmtInterface ast.Stmt, expr ast.AccessExpr, indent string) {
-	transpiler.TranspileExpr(stmtInterface, expr.Instance, indent)
+func (transpiler *Transpiler) TranspileAccessExpr(stmtInterface ast.Stmt, expr ast.AccessExpr, indent string, locals map[string]bool) {
+	transpiler.TranspileExpr(stmtInterface, expr.Instance, indent, locals)
 	transpiler.Write(".")
-	transpiler.TranspileExpr(stmtInterface, expr.Field, indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Field, indent, locals)
 }
 
-func (transpiler *Transpiler) TranspileBinaryExpr(stmtInterface ast.Stmt, expr ast.BinaryExpr, indent string) {
-	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+func (transpiler *Transpiler) TranspileBinaryExpr(stmtInterface ast.Stmt, expr ast.BinaryExpr, indent string, locals map[string]bool) {
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent, locals)
 	switch expr.Operator.Type {
 	case lexer.TokenPlus:
 		transpiler.Write(" + ")
@@ -67,34 +68,41 @@ func (transpiler *Transpiler) TranspileBinaryExpr(stmtInterface ast.Stmt, expr a
 	default:
 		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.String(), reflect.TypeOf(expr.Operator)))
 	}
-	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent, locals)
 }
 
-func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr ast.FuncCallExpr, indent string) {
+func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr ast.FuncCallExpr, indent string, locals map[string]bool) {
 	switch stmt := stmtInterface.(type) {
 	case ast.ReturnStmt:
 		if expr.OrPanic {
-			transpiler.Writef("%sret, err := ", indent)
-			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			retExists := locals["ret"]
+			if retExists {
+				transpiler.Writef("%sret, err = ", indent)
+			} else {
+				transpiler.Writef("%sret, err := ", indent)
+				locals["ret"] = true
+				locals["err"] = true
+			}
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent, locals)
 			transpiler.Write("(")
-			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent, locals)
 			transpiler.Write(")\n")
 			transpiler.Writef("%sif err != nil {\n", indent)
 			transpiler.Writef("%s%spanic(err)\n", indent, indent)
 			transpiler.Writef("%s}\n", indent)
-			transpiler.Writef("%sreturn ret\n", indent)
+			transpiler.Writef("%sreturn ret", indent)
 		} else {
-			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent, locals)
 			transpiler.Write("(")
-			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
-			transpiler.Write(")\n")
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent, locals)
+			transpiler.Write(")")
 		}
 	case ast.ExprStmt:
 		switch stmt.Expr.(type) {
 		case ast.DeclAssignExpr:
-			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent, locals)
 			transpiler.Write("(")
-			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent, locals)
 			transpiler.Write(")\n")
 			if expr.OrPanic {
 				transpiler.Writef("%sif err != nil { \n", indent)
@@ -104,11 +112,17 @@ func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr
 		case ast.FuncCallExpr:
 			transpiler.Write(indent)
 			if expr.OrPanic {
-				transpiler.Write("err := ")
+				errExists := locals["err"]
+				if errExists {
+					transpiler.Write("err = ")
+				} else {
+					transpiler.Write("err := ")
+					locals["err"] = true
+				}
 			}
-			transpiler.TranspileExpr(stmtInterface, expr.Func, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Func, indent, locals)
 			transpiler.Write("(")
-			transpiler.TranspileExpr(stmtInterface, expr.Args, indent)
+			transpiler.TranspileExpr(stmtInterface, expr.Args, indent, locals)
 			transpiler.Write(")\n")
 			if expr.OrPanic {
 				transpiler.Writef("%sif err != nil { \n", indent)
@@ -123,35 +137,35 @@ func (transpiler *Transpiler) TranspileFuncCallExpr(stmtInterface ast.Stmt, expr
 	}
 }
 
-func (transpiler *Transpiler) TranspileDeclAssignExpr(stmtInterface ast.Stmt, expr ast.DeclAssignExpr, indent string) {
+func (transpiler *Transpiler) TranspileDeclAssignExpr(stmtInterface ast.Stmt, expr ast.DeclAssignExpr, indent string, locals map[string]bool) {
 	transpiler.Write(indent)
-	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent, locals)
 	funcCallExpr, isFuncCallExpr := expr.Right.(ast.FuncCallExpr)
 	if isFuncCallExpr && funcCallExpr.OrPanic {
 		transpiler.Write(", err")
+		locals["err"] = true
 	}
 	transpiler.Write(" := ")
-	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
-	transpiler.Write("\n")
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent, locals)
 }
 
-func (transpiler *Transpiler) TranspileAssignmentExpr(stmtInterface ast.Stmt, expr ast.AssignmentExpr, indent string) {
+func (transpiler *Transpiler) TranspileAssignmentExpr(stmtInterface ast.Stmt, expr ast.AssignmentExpr, indent string, locals map[string]bool) {
 	transpiler.Write(indent)
-	transpiler.TranspileExpr(stmtInterface, expr.Left, indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Left, indent, locals)
 	transpiler.Write(" = ")
-	transpiler.TranspileExpr(stmtInterface, expr.Right, indent)
+	transpiler.TranspileExpr(stmtInterface, expr.Right, indent, locals)
 	transpiler.Write("\n")
 }
 
-func (transpiler *Transpiler) TranspileListExpr(stmtInterface ast.Stmt, expr ast.ListExpr, indent string) {
-	transpiler.TranspileExpr(stmtInterface, expr.Value, indent)
+func (transpiler *Transpiler) TranspileListExpr(stmtInterface ast.Stmt, expr ast.ListExpr, indent string, locals map[string]bool) {
+	transpiler.TranspileExpr(stmtInterface, expr.Value, indent, locals)
 	if expr.Next != nil {
 		transpiler.Write(", ")
-		transpiler.TranspileExpr(stmtInterface, expr.Next, "")
+		transpiler.TranspileExpr(stmtInterface, expr.Next, "", locals)
 	}
 }
 
-func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterface ast.Expr, indent string) {
+func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterface ast.Expr, indent string, locals map[string]bool) {
 	switch expr := exprInterface.(type) {
 	case nil:
 		return
@@ -162,17 +176,17 @@ func (transpiler *Transpiler) TranspileExpr(stmtInterface ast.Stmt, exprInterfac
 	case ast.NumberExpr:
 		transpiler.TranspileNumberExpr(expr)
 	case ast.AccessExpr:
-		transpiler.TranspileAccessExpr(stmtInterface, expr, indent)
+		transpiler.TranspileAccessExpr(stmtInterface, expr, indent, locals)
 	case ast.BinaryExpr:
-		transpiler.TranspileBinaryExpr(stmtInterface, expr, indent)
+		transpiler.TranspileBinaryExpr(stmtInterface, expr, indent, locals)
 	case ast.FuncCallExpr:
-		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent)
+		transpiler.TranspileFuncCallExpr(stmtInterface, expr, indent, locals)
 	case ast.AssignmentExpr:
-		transpiler.TranspileAssignmentExpr(stmtInterface, expr, indent)
+		transpiler.TranspileAssignmentExpr(stmtInterface, expr, indent, locals)
 	case ast.DeclAssignExpr:
-		transpiler.TranspileDeclAssignExpr(stmtInterface, expr, indent)
+		transpiler.TranspileDeclAssignExpr(stmtInterface, expr, indent, locals)
 	case ast.ListExpr:
-		transpiler.TranspileListExpr(stmtInterface, expr, indent)
+		transpiler.TranspileListExpr(stmtInterface, expr, indent, locals)
 	default:
 		panic(fmt.Sprintf("\n%s... <--- unhandled %s", transpiler.StringBuilder.String(), reflect.TypeOf(expr)))
 	}
@@ -186,10 +200,16 @@ func (transpiler *Transpiler) TranspileImportStmt(stmt ast.ImportStmt, indent st
 	transpiler.Writef("%simport \"%s\"\n\n", indent, stmt.PackageName.Value)
 }
 
-func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, indent string, depth int) {
+func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, indent string, depth int, locals map[string]bool) {
+	locals[stmt.Name.Value] = true
+	innerLocals := make(map[string]bool)
+	for k, v := range locals {
+		innerLocals[k] = v
+	}
 	transpiler.Writef("%sfunc %s", indent, stmt.Name.Value)
 	paramNameAndType := make([]string, 0)
 	for _, param := range stmt.Parameters {
+		innerLocals[param.Name.Value] = true
 		paramNameAndType = append(paramNameAndType, fmt.Sprintf("%s %s", param.Name.Value, param.Type.Value))
 	}
 	transpiler.Writef("(%s) ", strings.Join(paramNameAndType, ", "))
@@ -205,26 +225,27 @@ func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, inden
 		}
 	}
 	transpiler.Write("{\n")
-	transpiler.TranspileWithDepth(stmt.Block.(ast.BlockStmt).Body, depth+1)
+	transpiler.TranspileWithDepth(stmt.Block.(ast.BlockStmt).Body, depth+1, innerLocals)
 	transpiler.Write("}\n\n")
 }
 
-func (transpiler *Transpiler) TranspileReturnStmt(stmt ast.ReturnStmt, indent string) {
+func (transpiler *Transpiler) TranspileReturnStmt(stmt ast.ReturnStmt, indent string, locals map[string]bool) {
 	funcCallExpr, isFuncCallExpr := stmt.Values.(ast.FuncCallExpr)
 	if isFuncCallExpr && funcCallExpr.OrPanic {
 		// defer the return keyword
 	} else {
 		transpiler.Writef("%sreturn ", indent)
 	}
-	transpiler.TranspileExpr(stmt, stmt.Values, indent)
+	transpiler.TranspileExpr(stmt, stmt.Values, indent, locals)
 	transpiler.Write("\n")
 }
 
-func (transpiler *Transpiler) TranspileVarDeclStmt(stmt ast.VarDeclStmt, indent string) {
+func (transpiler *Transpiler) TranspileVarDeclStmt(stmt ast.VarDeclStmt, indent string, locals map[string]bool) {
+	locals[stmt.Name.Value] = true
 	transpiler.Writef("%svar %s %s\n", indent, stmt.Name.Value, stmt.Type.Value)
 }
 
-func (transpiler *Transpiler) TranspileWithDepth(_ast []ast.Stmt, depth int) {
+func (transpiler *Transpiler) TranspileWithDepth(_ast []ast.Stmt, depth int, locals map[string]bool) {
 	indent := strings.Repeat("\t", depth)
 	for _, stmtInterface := range _ast {
 		switch stmt := stmtInterface.(type) {
@@ -233,13 +254,13 @@ func (transpiler *Transpiler) TranspileWithDepth(_ast []ast.Stmt, depth int) {
 		case ast.ImportStmt:
 			transpiler.TranspileImportStmt(stmt, indent)
 		case ast.FuncDeclStmt:
-			transpiler.TranspileFuncDeclStmt(stmt, indent, depth)
+			transpiler.TranspileFuncDeclStmt(stmt, indent, depth, locals)
 		case ast.ReturnStmt:
-			transpiler.TranspileReturnStmt(stmt, indent)
+			transpiler.TranspileReturnStmt(stmt, indent, locals)
 		case ast.VarDeclStmt:
-			transpiler.TranspileVarDeclStmt(stmt, indent)
+			transpiler.TranspileVarDeclStmt(stmt, indent, locals)
 		case ast.ExprStmt:
-			transpiler.TranspileExpr(stmt, stmt.Expr, indent)
+			transpiler.TranspileExpr(stmt, stmt.Expr, indent, locals)
 		default:
 			panic(fmt.Sprintf("\n%s%s--- here\n%sunhandled %s", transpiler.StringBuilder.String(), indent, indent, reflect.TypeOf(stmt)))
 		}
