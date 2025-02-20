@@ -23,6 +23,7 @@ const (
 	TokenBraceClose = "BRACE_CLOSE"
 	TokenNewLine    = "NEW_LINE"
 	TokenComma      = "COMMA"
+	TokenColon      = "COLON"
 
 	// Keywords
 	TokenPackage = "PACKAGE"
@@ -31,6 +32,7 @@ const (
 	TokenVar     = "VAR"
 	TokenOrPanic = "OR_PANIC"
 	TokenReturn  = "RETURN"
+	TokenCase    = "CASE"
 
 	TokenEOF = "EOF"
 )
@@ -42,6 +44,7 @@ var Keywords = map[string]TokenType{
 	"var":      TokenVar,
 	"or_panic": TokenOrPanic,
 	"return":   TokenReturn,
+	"case":     TokenCase,
 }
 
 func IsKeyword(value string) bool {

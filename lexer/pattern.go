@@ -60,6 +60,7 @@ var Patterns = []Pattern{
 	{regexp.MustCompile("^\\d+(\\.\\d+)?"), NumberHandler()},
 	{regexp.MustCompile("^package"), DefaultHandler(TokenPackage)},
 	{regexp.MustCompile("^import"), DefaultHandler(TokenImport)},
+	{regexp.MustCompile("^case"), DefaultHandler(TokenCase)},
 	{regexp.MustCompile("^="), DefaultHandler(TokenAssign)},
 	{regexp.MustCompile("^:="), DefaultHandler(TokenDeclAssign)},
 	{regexp.MustCompile("^\\+"), DefaultHandler(TokenPlus)},
@@ -70,4 +71,5 @@ var Patterns = []Pattern{
 	{regexp.MustCompile("^\\}"), DefaultHandler(TokenBraceClose)},
 	{regexp.MustCompile("^\\."), DefaultHandler(TokenDot)},
 	{regexp.MustCompile("^,"), DefaultHandler(TokenComma)},
+	{regexp.MustCompile("^:"), DefaultHandler(TokenColon)},
 }

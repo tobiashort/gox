@@ -197,7 +197,18 @@ func (transpiler *Transpiler) TranspilePackageStmt(stmt ast.PackageStmt, indent 
 }
 
 func (transpiler *Transpiler) TranspileImportStmt(stmt ast.ImportStmt, indent string) {
-	transpiler.Writef("%simport \"%s\"\n\n", indent, stmt.PackageName.Value)
+	transpiler.Writef("%simport ", indent)
+	if len(stmt.PackageNames) == 0 {
+		panic(fmt.Sprintf("\n%s... <--- ", transpiler.StringBuilder.String()))
+	} else if len(stmt.PackageNames) == 1 {
+		transpiler.Writef("\"%s\"\n\n", stmt.PackageNames[0].Value)
+	} else {
+		transpiler.Write("\n")
+		for _, packageName := range stmt.PackageNames {
+			transpiler.Writef("%s%s\"%s\"\n", indent, indent, packageName.Value)
+		}
+		transpiler.Writef("\n%s)\n\n", indent)
+	}
 }
 
 func (transpiler *Transpiler) TranspileFuncDeclStmt(stmt ast.FuncDeclStmt, indent string, depth int, locals map[string]bool) {

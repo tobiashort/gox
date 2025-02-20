@@ -43,12 +43,30 @@ func ParsePackageStmt(parser *Parser) ast.Stmt {
 }
 
 func ParseImportStmt(parser *Parser) ast.Stmt {
+	packageNames := make([]lexer.Token, 0)
 	parser.Expect(lexer.TokenImport)
-	nextToken := parser.Expect(lexer.TokenString)
+	nextToken := parser.Advance()
+	if nextToken.Type == lexer.TokenString {
+		packageNames = append(packageNames, nextToken)
+	} else if nextToken.Type == lexer.TokenParenOpen {
+		parser.Expect(lexer.TokenNewLine)
+		for {
+			nextToken = parser.Advance()
+			if nextToken.Type == lexer.TokenParenClose {
+				break
+			} else if nextToken.Type == lexer.TokenString {
+				packageNames = append(packageNames, nextToken)
+				parser.Expect(lexer.TokenNewLine)
+			} else {
+				parser.InvalidToken(nextToken)
+			}
+		}
+	} else {
+		parser.InvalidToken(nextToken)
+	}
 	parser.Expect(lexer.TokenNewLine)
-
 	return ast.ImportStmt{
-		PackageName: nextToken,
+		PackageNames: packageNames,
 	}
 }
 

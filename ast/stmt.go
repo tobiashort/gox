@@ -15,7 +15,7 @@ type PackageStmt struct {
 }
 
 type ImportStmt struct {
-	PackageName lexer.Token
+	PackageNames []lexer.Token
 }
 
 type FuncParameter struct {

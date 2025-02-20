@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/sanity-io/litter"
 
@@ -17,6 +22,9 @@ import (
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
 	gox tokenize FILE
+	gox parse FILE
+	gox transpile FILE
+	gox run FILE
 `)
 }
 
@@ -80,6 +88,27 @@ func main() {
 		file := flag.Arg(1)
 		source := transpile(file)
 		fmt.Println(source)
+	case "run":
+		if flag.NArg() != 2 {
+			fmt.Fprintln(os.Stderr, "must provide file")
+			os.Exit(1)
+		}
+		file := flag.Arg(1)
+		source := transpile(file)
+		tempDir, err := os.MkdirTemp(os.TempDir(), "gox")
+		assert.Nil(err)
+		defer os.RemoveAll(tempDir)
+		goFile, err := os.OpenFile(filepath.Join(tempDir, strings.TrimSuffix(filepath.Base(file), ".gox")+".go"), os.O_CREATE|os.O_RDWR, 0o644)
+		fmt.Println(goFile.Name())
+		assert.Nil(err)
+		_, err = io.Copy(goFile, bytes.NewReader([]byte(source)))
+		assert.Nil(err)
+		cmd := exec.Command("go", "run", goFile.Name())
+		output, err := cmd.CombinedOutput()
+		fmt.Print(string(output))
+		if err != nil {
+			os.Exit(1)
+		}
 	default:
 		usage()
 		os.Exit(1)

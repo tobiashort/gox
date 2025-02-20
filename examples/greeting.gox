@@ -1,0 +1,19 @@
+package main
+
+import (
+	"fmt"
+)
+
+func greetingForLang(lang string) (string, error) {
+	switch lang {
+	case "Australian":
+		return "G'day mate!"
+	default:
+		return fmt.Errof("language not supported: %s", lang)
+	}
+}
+
+func main() {
+	greets := greetingForLang("Australian") or_panic
+	fmt.Println(greets)
+}

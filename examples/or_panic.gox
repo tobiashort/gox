@@ -10,8 +10,8 @@ func foo() error {
 	return fmt.Errorf("foobar")
 }
 
-func foo2() {
-	return foo() or_panic
+func foo2() string {
+	return bar() or_panic
 }
 
 func main() {
